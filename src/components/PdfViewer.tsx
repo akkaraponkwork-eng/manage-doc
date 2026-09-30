@@ -44,11 +44,11 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
           </button>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => setScale(s => Math.max(0.5, s - 0.2))} className="p-1 sm:p-1.5 text-navy-600 hover:bg-navy-100 rounded-lg hidden sm:block">
+          <button onClick={() => setScale(s => Math.max(0.5, s - 0.2))} className="p-1 sm:p-1.5 text-navy-600 hover:bg-navy-100 rounded-lg">
             <ZoomOut className="w-4 h-4" />
           </button>
-          <span className="text-xs font-medium w-8 sm:w-10 text-center hidden sm:block">{Math.round(scale * 100)}%</span>
-          <button onClick={() => setScale(s => Math.min(3.0, s + 0.2))} className="p-1 sm:p-1.5 text-navy-600 hover:bg-navy-100 rounded-lg hidden sm:block">
+          <span className="text-xs font-medium w-8 sm:w-10 text-center">{Math.round(scale * 100)}%</span>
+          <button onClick={() => setScale(s => Math.min(3.0, s + 0.2))} className="p-1 sm:p-1.5 text-navy-600 hover:bg-navy-100 rounded-lg">
             <ZoomIn className="w-4 h-4" />
           </button>
           
@@ -100,38 +100,30 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
         }}
       >
         {containerWidth ? (
-          containerWidth < 768 ? (
-            <iframe 
-              src={`${fileUrl}#view=FitH`}
-              className="w-full h-full border-0 rounded-lg shadow-sm bg-white"
-              title="PDF Document Viewer"
+          <Document
+            file={fileUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            loading={
+              <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="text-sm">กำลังโหลดเอกสาร...</span>
+              </div>
+            }
+            error={
+              <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm text-center px-4">
+                ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
+              </div>
+            }
+          >
+            <Page
+              pageNumber={pageNumber}
+              scale={scale}
+              width={Math.min(containerWidth - 32, 800)}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+              className="shadow-md bg-white"
             />
-          ) : (
-            <Document
-              file={fileUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              loading={
-                <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                  <span className="text-sm">กำลังโหลดเอกสาร...</span>
-                </div>
-              }
-              error={
-                <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm text-center px-4">
-                  ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
-                </div>
-              }
-            >
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                width={Math.min(containerWidth - 32, 800)}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-                className="shadow-md bg-white"
-              />
-            </Document>
-          )
+          </Document>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
             <Loader2 className="w-6 h-6 animate-spin" />

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 import { getUserByUsername, createUser } from '@/lib/google-sheets';
 import { getAllUsers, deleteUser } from '@/lib/google-sheets';
 import { v4 as uuidv4 } from 'uuid';
