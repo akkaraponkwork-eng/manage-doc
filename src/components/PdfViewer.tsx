@@ -100,30 +100,50 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
         }}
       >
         {containerWidth ? (
-          <Document
-            file={fileUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={
-              <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
-                <Loader2 className="w-6 h-6 animate-spin" />
-                <span className="text-sm">กำลังโหลดเอกสาร...</span>
+          containerWidth < 768 ? (
+            <div className="w-full h-full flex justify-center items-start overflow-auto">
+              <div 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  transform: `scale(${scale})`, 
+                  transformOrigin: 'top center',
+                  transition: 'transform 0.2s ease-in-out'
+                }}
+              >
+                <iframe 
+                  src={`${fileUrl}#view=FitH`}
+                  className="w-full h-full border-0 rounded-lg shadow-sm bg-white"
+                  title="PDF Document Viewer"
+                />
               </div>
-            }
-            error={
-              <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm text-center px-4">
-                ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
-              </div>
-            }
-          >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              width={Math.min(containerWidth - 32, 800)}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              className="shadow-md bg-white"
-            />
-          </Document>
+            </div>
+          ) : (
+            <Document
+              file={fileUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              loading={
+                <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="text-sm">กำลังโหลดเอกสาร...</span>
+                </div>
+              }
+              error={
+                <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm text-center px-4">
+                  ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
+                </div>
+              }
+            >
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                width={Math.min(containerWidth - 32, 800)}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                className="shadow-md bg-white"
+              />
+            </Document>
+          )
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
             <Loader2 className="w-6 h-6 animate-spin" />
