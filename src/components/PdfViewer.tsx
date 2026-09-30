@@ -72,30 +72,37 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
           }
         }}
       >
-        <Document
-          file={fileUrl}
-          onLoadSuccess={onDocumentLoadSuccess}
-          loading={
-            <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
-              <Loader2 className="w-6 h-6 animate-spin" />
-              <span className="text-sm">กำลังโหลดเอกสาร...</span>
-            </div>
-          }
-          error={
-            <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm">
-              ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
-            </div>
-          }
-        >
-          <Page
-            pageNumber={pageNumber}
-            scale={scale}
-            width={containerWidth ? Math.min(containerWidth - 32, 800) : undefined}
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-            className="shadow-md bg-white"
-          />
-        </Document>
+        {containerWidth ? (
+          <Document
+            file={fileUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            loading={
+              <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="text-sm">กำลังโหลดเอกสาร...</span>
+              </div>
+            }
+            error={
+              <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm text-center px-4">
+                ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
+              </div>
+            }
+          >
+            <Page
+              pageNumber={pageNumber}
+              scale={scale}
+              width={Math.min(containerWidth - 32, 800)}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+              className="shadow-md bg-white"
+            />
+          </Document>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
+            <Loader2 className="w-6 h-6 animate-spin" />
+            <span className="text-sm">กำลังเตรียมแสดงผล...</span>
+          </div>
+        )}
       </div>
     </div>
   );
