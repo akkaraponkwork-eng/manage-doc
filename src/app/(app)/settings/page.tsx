@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Settings, HardDrive, CheckCircle, AlertCircle, Loader2, ExternalLink, RefreshCw } from 'lucide-react';
 
-export default function SettingsPage() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
@@ -140,5 +140,13 @@ export default function SettingsPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-navy-500">กำลังโหลดการตั้งค่า...</div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }

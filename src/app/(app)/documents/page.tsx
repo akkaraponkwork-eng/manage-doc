@@ -62,13 +62,13 @@ export default function DocumentsPage() {
   }, [fetchDocs]);
 
   const sortedDocs = [...docs].sort((a, b) => {
-    let valA = a[sortField] || '';
-    let valB = b[sortField] || '';
+    let valA: string | number = a[sortField] || '';
+    let valB: string | number = b[sortField] || '';
     
     // Sort dates properly
     if (sortField === 'createdAt' || sortField === 'date') {
-      valA = new Date(valA).getTime();
-      valB = new Date(valB).getTime();
+      valA = new Date(valA as string).getTime();
+      valB = new Date(valB as string).getTime();
     }
     
     if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
