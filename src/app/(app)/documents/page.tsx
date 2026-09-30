@@ -146,18 +146,6 @@ export default function DocumentsPage() {
               ))}
             </select>
           </div>
-          <div className="relative">
-            <select
-              value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-              className="pl-4 pr-8 py-2.5 bg-navy-50 border border-navy-100 rounded-xl text-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-300 appearance-none cursor-pointer"
-            >
-              <option value={10}>แสดง 10 รายการ</option>
-              <option value={20}>แสดง 20 รายการ</option>
-              <option value={50}>แสดง 50 รายการ</option>
-              <option value={100}>แสดง 100 รายการ</option>
-            </select>
-          </div>
         </div>
       </div>
 
@@ -305,11 +293,23 @@ export default function DocumentsPage() {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-navy-100">
-                <p className="text-xs text-navy-500">
-                  แสดง {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, sortedDocs.length)} จาก {sortedDocs.length}
-                </p>
+              <div className="flex flex-wrap items-center justify-between px-4 py-3 border-t border-navy-100 gap-2">
+                <div className="flex items-center gap-3">
+                  <p className="text-xs text-navy-500">
+                    แสดง {(page - 1) * pageSize + 1}-{Math.min(page * pageSize, sortedDocs.length)} จาก {sortedDocs.length}
+                  </p>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+                    className="pl-2 pr-6 py-1 text-xs bg-navy-50 border border-navy-100 rounded-lg text-navy-700 focus:outline-none focus:ring-2 focus:ring-navy-300 appearance-none cursor-pointer"
+                  >
+                    <option value={10}>10 รายการ</option>
+                    <option value={20}>20 รายการ</option>
+                    <option value={50}>50 รายการ</option>
+                    <option value={100}>100 รายการ</option>
+                  </select>
+                </div>
+                {totalPages > 1 && (
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -327,8 +327,8 @@ export default function DocumentsPage() {
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
+                )}
               </div>
-            )}
           </>
         )}
       </div>

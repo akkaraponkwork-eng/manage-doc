@@ -21,12 +21,16 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
     if (!el) return;
     const measure = () => {
       setContainerWidth(el.clientWidth);
-      setIsMobile(el.clientWidth < 768);
+      setIsMobile(window.innerWidth < 768);
     };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    return () => ro.disconnect();
+    window.addEventListener('resize', () => setIsMobile(window.innerWidth < 768));
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', () => setIsMobile(window.innerWidth < 768));
+    };
   }, []);
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
