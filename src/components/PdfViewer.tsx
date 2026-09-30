@@ -18,6 +18,8 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
     setPageNumber(1);
   }
 
+  const [containerWidth, setContainerWidth] = useState<number>();
+
   return (
     <div className="flex flex-col h-full bg-navy-900/5">
       {/* PDF Controls */}
@@ -62,7 +64,14 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
       </div>
       
       {/* PDF Document Container */}
-      <div className="flex-1 overflow-auto flex justify-center p-4">
+      <div 
+        className="flex-1 overflow-auto flex justify-center p-4"
+        ref={(el) => {
+          if (el && !containerWidth) {
+            setContainerWidth(el.clientWidth);
+          }
+        }}
+      >
         <Document
           file={fileUrl}
           onLoadSuccess={onDocumentLoadSuccess}
@@ -74,13 +83,14 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
           }
           error={
             <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm">
-              ไม่สามารถโหลดเอกสารได้
+              ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
             </div>
           }
         >
           <Page
             pageNumber={pageNumber}
             scale={scale}
+            width={containerWidth ? Math.min(containerWidth - 32, 800) : undefined}
             renderTextLayer={true}
             renderAnnotationLayer={true}
             className="shadow-md bg-white"
