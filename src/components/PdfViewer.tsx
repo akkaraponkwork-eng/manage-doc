@@ -101,15 +101,14 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
       >
         {containerWidth ? (
           containerWidth < 768 ? (
-            <div className="w-full h-full flex justify-center items-start overflow-auto">
+            <div className="w-full h-full overflow-auto bg-navy-50">
               <div 
                 style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  transform: `scale(${scale})`, 
-                  transformOrigin: 'top center',
-                  transition: 'transform 0.2s ease-in-out'
+                  width: `${scale * 100}%`, 
+                  height: `${Math.max(scale * 100, 100)}%`, 
+                  transition: 'all 0.2s ease-in-out'
                 }}
+                className="min-w-full min-h-full mx-auto"
               >
                 <iframe 
                   src={`${fileUrl}#view=FitH`}

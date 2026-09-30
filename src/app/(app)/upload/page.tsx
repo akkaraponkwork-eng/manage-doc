@@ -208,9 +208,9 @@ export default function UploadPage() {
                   )}
                   <button
                     onClick={(e) => { e.stopPropagation(); removeImage(i); }}
-                    className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    className="absolute top-1 right-1 p-1.5 bg-black/50 text-white rounded-full shadow-sm hover:bg-red-500 transition-colors cursor-pointer"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
