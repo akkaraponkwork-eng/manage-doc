@@ -27,10 +27,13 @@ export async function GET(
       }
     });
 
+    const filename = doc.subject ? `${doc.subject}.pdf` : `document-${id}.pdf`;
+    const encodedFilename = encodeURIComponent(filename);
+
     return new NextResponse(webStream, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="document-${id}.pdf"`,
+        'Content-Disposition': `inline; filename="document.pdf"; filename*=UTF-8''${encodedFilename}`,
       },
     });
   } catch (error) {
