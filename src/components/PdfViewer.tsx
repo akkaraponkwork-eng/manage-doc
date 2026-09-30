@@ -74,24 +74,11 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
       >
         {containerWidth ? (
           containerWidth < 768 ? (
-            <div className="flex flex-col items-center justify-center h-full w-full gap-4 p-4 text-center">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-2">
-                <Download className="w-10 h-10 text-navy-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-navy-800">เปิดเอกสารบนมือถือ</h3>
-              <p className="text-sm text-navy-500 max-w-xs mb-4">
-                เพื่อป้องกันแอปค้างหรือเด้งออก กรุณากดปุ่มด้านล่างเพื่อเปิดอ่านด้วยระบบของโทรศัพท์โดยตรงครับ
-              </p>
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-6 py-3 bg-navy-600 hover:bg-navy-700 text-white rounded-xl shadow-lg shadow-navy-200 flex items-center gap-2 transition-all font-medium"
-              >
-                <Download className="w-5 h-5" />
-                เปิดอ่าน / ดาวน์โหลดเอกสาร
-              </a>
-            </div>
+            <iframe 
+              src={fileUrl} 
+              className="w-full h-full border-0 rounded-lg shadow-sm bg-white"
+              title="PDF Document Viewer"
+            />
           ) : (
             <Document
               file={fileUrl}
