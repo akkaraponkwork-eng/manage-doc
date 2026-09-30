@@ -23,7 +23,7 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
   return (
     <div className="flex flex-col h-full bg-navy-900/5">
       {/* PDF Controls */}
-      <div className="flex items-center justify-between p-2 bg-white border-b border-navy-100">
+      <div className="hidden md:flex items-center justify-between p-2 bg-white border-b border-navy-100">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPageNumber(p => Math.max(1, p - 1))}
@@ -65,7 +65,7 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
       
       {/* PDF Document Container */}
       <div 
-        className="flex-1 overflow-auto flex justify-center p-4"
+        className="flex-1 overflow-auto flex justify-center p-4 bg-navy-50"
         ref={(el) => {
           if (el && !containerWidth) {
             setContainerWidth(el.clientWidth);
@@ -73,30 +73,51 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
         }}
       >
         {containerWidth ? (
-          <Document
-            file={fileUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={
-              <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
-                <Loader2 className="w-6 h-6 animate-spin" />
-                <span className="text-sm">กำลังโหลดเอกสาร...</span>
+          containerWidth < 768 ? (
+            <div className="flex flex-col items-center justify-center h-full w-full gap-4 p-4 text-center">
+              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-2">
+                <Download className="w-10 h-10 text-navy-400" />
               </div>
-            }
-            error={
-              <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm text-center px-4">
-                ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
-              </div>
-            }
-          >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              width={Math.min(containerWidth - 32, 800)}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              className="shadow-md bg-white"
-            />
-          </Document>
+              <h3 className="text-lg font-semibold text-navy-800">เปิดเอกสารบนมือถือ</h3>
+              <p className="text-sm text-navy-500 max-w-xs mb-4">
+                เพื่อป้องกันแอปค้างหรือเด้งออก กรุณากดปุ่มด้านล่างเพื่อเปิดอ่านด้วยระบบของโทรศัพท์โดยตรงครับ
+              </p>
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-navy-600 hover:bg-navy-700 text-white rounded-xl shadow-lg shadow-navy-200 flex items-center gap-2 transition-all font-medium"
+              >
+                <Download className="w-5 h-5" />
+                เปิดอ่าน / ดาวน์โหลดเอกสาร
+              </a>
+            </div>
+          ) : (
+            <Document
+              file={fileUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              loading={
+                <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="text-sm">กำลังโหลดเอกสาร...</span>
+                </div>
+              }
+              error={
+                <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm text-center px-4">
+                  ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
+                </div>
+              }
+            >
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                width={Math.min(containerWidth - 32, 800)}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                className="shadow-md bg-white"
+              />
+            </Document>
+          )
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
             <Loader2 className="w-6 h-6 animate-spin" />
