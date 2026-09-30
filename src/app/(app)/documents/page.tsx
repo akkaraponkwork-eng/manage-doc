@@ -238,12 +238,12 @@ export default function DocumentsPage() {
                           </button>
                           {doc.drivePdfId && (
                             <a
-                              href={`https://drive.google.com/file/d/${doc.drivePdfId}/view`}
+                              href={`/api/documents/${doc.id}/pdf`}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
                               className="p-1.5 text-navy-400 hover:text-navy-600 hover:bg-navy-100 rounded-lg"
-                              title="ดู PDF"
+                              title="ดู / ดาวน์โหลด PDF"
                             >
                               <Download className="w-4 h-4" />
                             </a>
