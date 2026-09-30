@@ -1,0 +1,257 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import {
+  Upload as UploadIcon, X, Loader2, Image as ImageIcon,
+  FileText, Save, PenLine,
+} from 'lucide-react';
+import type { ExtractedFields, CategoryRecord } from '@/lib/types';
+
+export default function UploadPage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [fields, setFields] = useState<ExtractedFields>({
+    docNumber: '', subject: '', from: '', to: '', date: new Date().toISOString().split('T')[0],
+  });
+  const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState<CategoryRecord[]>([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('/api/categories').then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) setCategories(data);
+    });
+  }, []);
+
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return;
+    const newFiles = Array.from(files).filter((f) => f.type.startsWith('image/') || f.type === 'application/pdf');
+    if (newFiles.length === 0) return;
+
+    const hasPdf = newFiles.some(f => f.type === 'application/pdf');
+    
+    if (hasPdf) {
+      const pdfFile = newFiles.find(f => f.type === 'application/pdf')!;
+      setImages([pdfFile]);
+      const reader = new FileReader();
+      reader.onload = (e) => setPreviews([e.target?.result as string]);
+      reader.readAsDataURL(pdfFile);
+    } else {
+      setImages((prev) => {
+        const noPdf = prev.filter(f => f.type !== 'application/pdf');
+        return [...noPdf, ...newFiles];
+      });
+
+      for (const file of newFiles) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setPreviews((prev) => {
+            const noPdf = prev.filter(p => !p.startsWith('data:application/pdf'));
+            return [...noPdf, e.target?.result as string];
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const removeImage = (idx: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== idx));
+    setPreviews((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleSave = async () => {
+    setUploading(true);
+    setError('');
+
+    try {
+      let imageIds: string[] = [];
+      let pdfId = '';
+
+      // Upload images if any exist
+      if (images.length > 0) {
+        const formData = new FormData();
+        for (const img of images) {
+          formData.append('images', img);
+        }
+
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!uploadRes.ok) throw new Error('Upload failed');
+        const uploadData = await uploadRes.json();
+        imageIds = uploadData.imageIds;
+        pdfId = uploadData.pdfId;
+      }
+
+      // Save document metadata
+      const docRes = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...fields,
+          category,
+          driveImageIds: imageIds.join(','),
+          drivePdfId: pdfId,
+          createdBy: session?.user?.name || '',
+        }),
+      });
+
+      if (!docRes.ok) throw new Error('Save failed');
+
+      router.push('/documents');
+    } catch {
+      setError('เกิดข้อผิดพลาดในการบันทึก กรุณาลองใหม่');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-navy-900">เพิ่มเอกสาร</h1>
+        <p className="text-navy-500 text-sm mt-1">กรอกข้อมูลและอัพโหลดไฟล์เอกสาร</p>
+      </div>
+
+      <div className="space-y-4 animate-fade-in-up">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
+            {error}
+          </div>
+        )}
+
+        <div className="bg-white rounded-2xl border border-navy-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <PenLine className="w-5 h-5 text-navy-500" />
+            <h2 className="text-lg font-semibold text-navy-900">กรอกข้อมูลเอกสาร</h2>
+          </div>
+
+          <div className="space-y-4">
+            <FormField label="ที่ (เลขที่หนังสือ)" value={fields.docNumber} onChange={(v) => setFields({ ...fields, docNumber: v })} />
+            <FormField label="เรื่อง" value={fields.subject} onChange={(v) => setFields({ ...fields, subject: v })} />
+            <FormField label="จาก" value={fields.from} onChange={(v) => setFields({ ...fields, from: v })} />
+            <FormField label="ถึง / เรียน" value={fields.to} onChange={(v) => setFields({ ...fields, to: v })} />
+            <FormField label="วันที่" type="date" value={fields.date} onChange={(v) => setFields({ ...fields, date: v })} />
+
+            <div>
+              <label className="block text-sm font-medium text-navy-700 mb-1.5">หมวดหมู่</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-4 py-2.5 bg-navy-50 border border-navy-100 rounded-xl text-navy-800 focus:outline-none focus:ring-2 focus:ring-navy-300"
+              >
+                <option value="">เลือกหมวดหมู่</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Image upload */}
+        <div className="bg-white rounded-2xl border border-navy-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <ImageIcon className="w-5 h-5 text-navy-500" />
+            <h2 className="text-lg font-semibold text-navy-900">แนบไฟล์รูปภาพ (บังคับ)</h2>
+          </div>
+          
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('upload-zone-active'); }}
+            onDragLeave={(e) => e.currentTarget.classList.remove('upload-zone-active')}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.currentTarget.classList.remove('upload-zone-active');
+              handleFiles(e.dataTransfer.files);
+            }}
+            className="border-2 border-dashed border-navy-200 rounded-2xl p-6 text-center hover:border-navy-400 hover:bg-navy-50/50 transition-all cursor-pointer mb-4"
+          >
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-navy-100 rounded-2xl mb-2">
+              <UploadIcon className="w-5 h-5 text-navy-500" />
+            </div>
+            <p className="text-sm font-medium text-navy-700">คลิกหรือลากไฟล์เอกสารมาวางที่นี่</p>
+            <p className="text-xs text-navy-400 mt-1">รองรับ JPG, PNG, PDF</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              multiple
+              capture="environment"
+              onChange={(e) => handleFiles(e.target.files)}
+              className="hidden"
+            />
+          </div>
+
+          {previews.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {previews.map((src, i) => (
+                <div key={i} className="relative group rounded-xl overflow-hidden border border-navy-100">
+                  {src.startsWith('data:application/pdf') ? (
+                    <div className="w-full h-32 flex flex-col items-center justify-center bg-navy-50 text-navy-400">
+                      <FileText className="w-8 h-8 mb-2" />
+                      <span className="text-[10px] truncate px-2 w-full text-center">PDF File</span>
+                    </div>
+                  ) : (
+                    <img src={src} alt={`page ${i + 1}`} className="w-full h-32 object-cover" />
+                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeImage(i); }}
+                    className="absolute top-1 right-1 p-1 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Save button */}
+        <button
+          onClick={handleSave}
+          disabled={uploading || !fields.subject.trim() || images.length === 0}
+          className="w-full py-3 bg-gradient-to-r from-navy-500 to-navy-700 hover:from-navy-400 hover:to-navy-600 text-white font-semibold rounded-xl shadow-lg shadow-navy-500/20 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+        >
+          {uploading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              กำลังบันทึก...
+            </>
+          ) : (
+            <>
+              <Save className="w-5 h-5" />
+              บันทึกเอกสาร
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FormField({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-navy-700 mb-1.5">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-2.5 bg-navy-50 border border-navy-100 rounded-xl text-navy-800 placeholder-navy-400 focus:outline-none focus:ring-2 focus:ring-navy-300"
+        placeholder={`กรอก${label}`}
+      />
+    </div>
+  );
+}
