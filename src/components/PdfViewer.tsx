@@ -13,24 +13,17 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.0);
   const [containerWidth, setContainerWidth] = useState<number>(0);
-  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const measure = () => {
-      setContainerWidth(el.clientWidth);
-      setIsMobile(window.innerWidth < 768);
-    };
+    const measure = () => setContainerWidth(el.clientWidth);
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    window.addEventListener('resize', () => setIsMobile(window.innerWidth < 768));
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', () => setIsMobile(window.innerWidth < 768));
-    };
+    return () => ro.disconnect();
   }, []);
 
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
@@ -50,7 +43,8 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
     }
   };
 
-  const pageWidth = containerWidth > 0 ? Math.min(containerWidth - 32, 800) : undefined;
+  // Use container width for react-pdf, fallback 600 to avoid blank state
+  const pageWidth = Math.min(containerWidth || 600, 800) - 32;
 
   return (
     <div className="flex flex-col h-full bg-navy-900/5">
@@ -118,14 +112,12 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
       {/* Content area */}
       <div ref={containerRef} className="flex-1 overflow-auto flex justify-center p-2 sm:p-4 bg-navy-50">
         {isMobile ? (
-          /* Mobile: iframe — native PDF viewer, no OOM */
           <iframe
             src={`${fileUrl}#view=FitH`}
             className="w-full h-full border-0 rounded-lg shadow-sm bg-white"
             title="PDF Document Viewer"
           />
-        ) : pageWidth ? (
-          /* Desktop: react-pdf — full controls */
+        ) : (
           <Document
             file={fileUrl}
             onLoadSuccess={onDocumentLoadSuccess}
@@ -150,11 +142,6 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
               className="shadow-md bg-white"
             />
           </Document>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
-            <Loader2 className="w-6 h-6 animate-spin" />
-            <span className="text-sm">กำลังเตรียมแสดงผล...</span>
-          </div>
         )}
       </div>
     </div>

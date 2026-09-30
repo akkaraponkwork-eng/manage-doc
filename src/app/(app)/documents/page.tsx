@@ -88,6 +88,17 @@ export default function DocumentsPage() {
     }
   };
 
+  const thaiMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const formatThaiDate = (dateStr: string) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = d.getDate();
+    const month = thaiMonths[d.getMonth()];
+    const buddhistYear = (d.getFullYear() + 543) % 100;
+    return `${day} ${month} ${buddhistYear}`;
+  };
+
   const SortIcon = ({ field }: { field: keyof DocumentRecord }) => {
     if (sortField !== field) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-30 group-hover:opacity-100 transition-opacity" />;
     return sortOrder === 'asc' ? <ArrowUp className="w-3 h-3 ml-1 text-navy-600" /> : <ArrowDown className="w-3 h-3 ml-1 text-navy-600" />;
@@ -187,6 +198,12 @@ export default function DocumentsPage() {
                       <div className="flex items-center">จาก <SortIcon field="from" /></div>
                     </th>
                     <th 
+                      onClick={() => handleSort('to')} 
+                      className="text-left px-4 py-3 text-xs font-semibold text-navy-500 uppercase cursor-pointer hover:bg-navy-100/50 group select-none"
+                    >
+                      <div className="flex items-center">ถึง <SortIcon field="to" /></div>
+                    </th>
+                    <th 
                       onClick={() => handleSort('date')} 
                       className="text-left px-4 py-3 text-xs font-semibold text-navy-500 uppercase cursor-pointer hover:bg-navy-100/50 group select-none"
                     >
@@ -208,7 +225,8 @@ export default function DocumentsPage() {
                       <td className="px-4 py-3 text-sm text-navy-600 whitespace-nowrap">{doc.docNumber || '-'}</td>
                       <td className="px-4 py-3 text-sm text-navy-800 font-medium max-w-xs truncate">{doc.subject || '-'}</td>
                       <td className="px-4 py-3 text-sm text-navy-600 max-w-[150px] truncate">{doc.from || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-navy-600 whitespace-nowrap">{doc.date || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-navy-600 max-w-[150px] truncate">{doc.to || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-navy-600 whitespace-nowrap">{formatThaiDate(doc.date)}</td>
                       <td className="px-4 py-3">
                         {doc.category && (
                           <span className="text-xs bg-navy-100 text-navy-600 px-2 py-0.5 rounded-full">
