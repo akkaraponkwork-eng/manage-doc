@@ -100,30 +100,38 @@ export default function PdfViewer({ fileUrl }: { fileUrl: string }) {
         }}
       >
         {containerWidth ? (
-          <Document
-            file={fileUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={
-              <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
-                <Loader2 className="w-6 h-6 animate-spin" />
-                <span className="text-sm">กำลังโหลดเอกสาร...</span>
-              </div>
-            }
-            error={
-              <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm text-center px-4">
-                ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
-              </div>
-            }
-          >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              width={Math.min(containerWidth - 32, 800)}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              className="shadow-md bg-white"
+          containerWidth < 768 ? (
+            <iframe 
+              src={`${fileUrl}#view=FitH`}
+              className="w-full h-full border-0 rounded-lg shadow-sm bg-white"
+              title="PDF Document Viewer"
             />
-          </Document>
+          ) : (
+            <Document
+              file={fileUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              loading={
+                <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <span className="text-sm">กำลังโหลดเอกสาร...</span>
+                </div>
+              }
+              error={
+                <div className="flex flex-col items-center justify-center h-full text-red-400 text-sm text-center px-4">
+                  ไม่สามารถโหลดเอกสารได้ (อาจมีปัญหาการเชื่อมต่อ หรือไฟล์ใหญ่เกินไป)
+                </div>
+              }
+            >
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                width={Math.min(containerWidth - 32, 800)}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                className="shadow-md bg-white"
+              />
+            </Document>
+          )
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-navy-400 gap-2">
             <Loader2 className="w-6 h-6 animate-spin" />
