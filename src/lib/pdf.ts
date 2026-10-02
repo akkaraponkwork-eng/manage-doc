@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
+import sharp from 'sharp';
 
 export async function generatePdfFromImages(
   images: { buffer: Buffer; mimeType: string }[],
@@ -6,12 +7,9 @@ export async function generatePdfFromImages(
   const pdfDoc = await PDFDocument.create();
 
   for (const img of images) {
-    let embeddedImage;
-    if (img.mimeType === 'image/png') {
-      embeddedImage = await pdfDoc.embedPng(img.buffer);
-    } else {
-      embeddedImage = await pdfDoc.embedJpg(img.buffer);
-    }
+    // Auto-rotate based on EXIF orientation (fixes portrait photos from phones)
+    const rotatedBuffer = await sharp(img.buffer).rotate().jpeg({ quality: 90 }).toBuffer();
+    const embeddedImage = await pdfDoc.embedJpg(rotatedBuffer);
 
     const { width, height } = embeddedImage;
 
