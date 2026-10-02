@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import {
   Upload as UploadIcon, X, Loader2, Image as ImageIcon,
-  FileText, Save, PenLine,
+  FileText, Save, PenLine, ChevronDown,
 } from 'lucide-react';
 import type { ExtractedFields, CategoryRecord } from '@/lib/types';
 
@@ -23,11 +23,19 @@ export default function UploadPage() {
   });
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState<CategoryRecord[]>([]);
+  const [fromSuggestions, setFromSuggestions] = useState<string[]>([]);
+  const [toSuggestions, setToSuggestions] = useState<string[]>([]);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetch('/api/categories').then((r) => r.json()).then((data) => {
       if (Array.isArray(data)) setCategories(data);
+    });
+    fetch('/api/documents').then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) {
+        setFromSuggestions([...new Set<string>(data.map((d) => d.from).filter(Boolean))]);
+        setToSuggestions([...new Set<string>(data.map((d) => d.to).filter(Boolean))]);
+      }
     });
   }, []);
 
@@ -141,8 +149,8 @@ export default function UploadPage() {
           <div className="space-y-4">
             <FormField label="ที่ (เลขที่หนังสือ)" value={fields.docNumber} onChange={(v) => setFields({ ...fields, docNumber: v })} />
             <FormField label="เรื่อง" value={fields.subject} onChange={(v) => setFields({ ...fields, subject: v })} />
-            <FormField label="จาก" value={fields.from} onChange={(v) => setFields({ ...fields, from: v })} />
-            <FormField label="ถึง / เรียน" value={fields.to} onChange={(v) => setFields({ ...fields, to: v })} />
+            <ComboField label="จาก" value={fields.from} onChange={(v) => setFields({ ...fields, from: v })} suggestions={fromSuggestions} />
+            <ComboField label="ถึง / เรียน" value={fields.to} onChange={(v) => setFields({ ...fields, to: v })} suggestions={toSuggestions} />
             <FormField label="วันที่" type="date" value={fields.date} onChange={(v) => setFields({ ...fields, date: v })} />
 
             <div>
@@ -260,7 +268,9 @@ export default function UploadPage() {
   );
 }
 
-function FormField({ label, value, onChange, type = 'text' }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+function FormField({ label, value, onChange, type = 'text' }: {
+  label: string; value: string; onChange: (v: string) => void; type?: string;
+}) {
   return (
     <div>
       <label className="block text-sm font-medium text-navy-700 mb-1.5">{label}</label>
@@ -271,6 +281,80 @@ function FormField({ label, value, onChange, type = 'text' }: { label: string; v
         className="w-full px-4 py-2.5 bg-navy-50 border border-navy-100 rounded-xl text-navy-800 placeholder-navy-400 focus:outline-none focus:ring-2 focus:ring-navy-300"
         placeholder={`กรอก${label}`}
       />
+    </div>
+  );
+}
+
+function ComboField({ label, value, onChange, suggestions }: {
+  label: string; value: string; onChange: (v: string) => void; suggestions: string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [highlighted, setHighlighted] = useState(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const filtered = value
+    ? suggestions.filter((s) => s.toLowerCase().includes(value.toLowerCase()) && s !== value)
+    : suggestions;
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const select = (s: string) => { onChange(s); setOpen(false); setHighlighted(-1); };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (!open && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { setOpen(true); return; }
+    if (e.key === 'Escape') { setOpen(false); setHighlighted(-1); return; }
+    if (e.key === 'ArrowDown') setHighlighted((h) => Math.min(h + 1, filtered.length - 1));
+    if (e.key === 'ArrowUp') setHighlighted((h) => Math.max(h - 1, 0));
+    if (e.key === 'Enter' && highlighted >= 0) { e.preventDefault(); select(filtered[highlighted]); }
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <label className="block text-sm font-medium text-navy-700 mb-1.5">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => { onChange(e.target.value); setOpen(true); setHighlighted(-1); }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
+          autoComplete="off"
+          className="w-full px-4 py-2.5 pr-10 bg-navy-50 border border-navy-100 rounded-xl text-navy-800 placeholder-navy-400 focus:outline-none focus:ring-2 focus:ring-navy-300"
+          placeholder={`กรอก${label}`}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          onMouseDown={(e) => { e.preventDefault(); setOpen((o) => !o); }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-navy-400 hover:text-navy-600"
+        >
+          <ChevronDown className={`w-4 h-4 transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {open && filtered.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full bg-white border border-navy-100 rounded-xl shadow-lg overflow-hidden max-h-52 overflow-y-auto">
+          {filtered.map((s, i) => (
+            <li
+              key={s}
+              onMouseDown={(e) => { e.preventDefault(); select(s); }}
+              onMouseEnter={() => setHighlighted(i)}
+              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
+                i === highlighted ? 'bg-navy-100 text-navy-900' : 'text-navy-700 hover:bg-navy-50'
+              }`}
+            >
+              {s}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
