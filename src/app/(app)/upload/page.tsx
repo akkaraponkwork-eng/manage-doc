@@ -13,6 +13,7 @@ export default function UploadPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -167,31 +168,49 @@ export default function UploadPage() {
             <h2 className="text-lg font-semibold text-navy-900">แนบไฟล์รูปภาพ (บังคับ)</h2>
           </div>
           
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('upload-zone-active'); }}
-            onDragLeave={(e) => e.currentTarget.classList.remove('upload-zone-active')}
-            onDrop={(e) => {
-              e.preventDefault();
-              e.currentTarget.classList.remove('upload-zone-active');
-              handleFiles(e.dataTransfer.files);
-            }}
-            className="border-2 border-dashed border-navy-200 rounded-2xl p-6 text-center hover:border-navy-400 hover:bg-navy-50/50 transition-all cursor-pointer mb-4"
-          >
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-navy-100 rounded-2xl mb-2">
-              <UploadIcon className="w-5 h-5 text-navy-500" />
-            </div>
-            <p className="text-sm font-medium text-navy-700">คลิกหรือลากไฟล์เอกสารมาวางที่นี่</p>
-            <p className="text-xs text-navy-400 mt-1">รองรับ JPG, PNG, PDF</p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*,application/pdf"
-              multiple
-              capture="environment"
-              onChange={(e) => handleFiles(e.target.files)}
-              className="hidden"
-            />
+          {/* Hidden inputs */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            multiple
+            onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
+            className="hidden"
+          />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => { handleFiles(e.target.files); e.target.value = ''; }}
+            className="hidden"
+          />
+
+          {/* Upload buttons */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <button
+              type="button"
+              onClick={() => cameraInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-navy-200 rounded-2xl p-5 hover:border-navy-400 hover:bg-navy-50/50 transition-all cursor-pointer"
+            >
+              <div className="inline-flex items-center justify-center w-10 h-10 bg-navy-100 rounded-xl">
+                <UploadIcon className="w-5 h-5 text-navy-500" />
+              </div>
+              <p className="text-sm font-medium text-navy-700">ถ่ายภาพ</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('upload-zone-active'); }}
+              onDragLeave={(e) => e.currentTarget.classList.remove('upload-zone-active')}
+              onDrop={(e) => { e.preventDefault(); e.currentTarget.classList.remove('upload-zone-active'); handleFiles(e.dataTransfer.files); }}
+              className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-navy-200 rounded-2xl p-5 hover:border-navy-400 hover:bg-navy-50/50 transition-all cursor-pointer"
+            >
+              <div className="inline-flex items-center justify-center w-10 h-10 bg-navy-100 rounded-xl">
+                <ImageIcon className="w-5 h-5 text-navy-500" />
+              </div>
+              <p className="text-sm font-medium text-navy-700">เลือกจาก Gallery</p>
+            </button>
           </div>
 
           {previews.length > 0 && (
