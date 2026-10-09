@@ -39,12 +39,12 @@ export async function POST(request: Request) {
     );
 
     // Await all uploads to finish
-    const [imageIds, pdfId] = await Promise.all([
+    const [uploadedImageIds, uploadedPdfId] = await Promise.all([
       Promise.all(uploadPromises),
       pdfPromise
     ]);
 
-    return NextResponse.json({ imageIds, pdfId });
+    return NextResponse.json({ imageIds: uploadedImageIds, pdfId: uploadedPdfId });
   } catch (error) {
     console.error('Upload error:', error);
     return NextResponse.json(
