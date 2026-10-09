@@ -22,21 +22,27 @@ export async function POST(request: Request) {
     }
 
     // Otherwise handle as images
-    const imageBuffers: { buffer: Buffer; mimeType: string }[] = [];
+    const imageBuffers: { buffer: Buffer; mimeType: string; name: string }[] = [];
 
     for (const file of files) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const mimeType = file.type || 'image/jpeg';
-
-      // Upload original image to Drive
-      const imageId = await uploadFile(buffer, file.name, mimeType);
-      imageIds.push(imageId);
-      imageBuffers.push({ buffer, mimeType });
+      imageBuffers.push({ buffer, mimeType, name: file.name });
     }
 
-    // Generate PDF from all images
-    const pdfBuffer = await generatePdfFromImages(imageBuffers);
-    pdfId = await uploadFile(pdfBuffer, `document_${Date.now()}.pdf`, 'application/pdf');
+    // Upload original images to Drive in parallel
+    const uploadPromises = imageBuffers.map(img => uploadFile(img.buffer, img.name, img.mimeType));
+    
+    // Generate PDF and upload it in parallel with image uploads
+    const pdfPromise = generatePdfFromImages(imageBuffers).then(pdfBuffer => 
+      uploadFile(pdfBuffer, `document_${Date.now()}.pdf`, 'application/pdf')
+    );
+
+    // Await all uploads to finish
+    const [imageIds, pdfId] = await Promise.all([
+      Promise.all(uploadPromises),
+      pdfPromise
+    ]);
 
     return NextResponse.json({ imageIds, pdfId });
   } catch (error) {

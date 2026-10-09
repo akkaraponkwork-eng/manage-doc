@@ -269,10 +269,20 @@ export async function deleteUser(id: string) {
 // Settings (key-value store)
 // ---------------------------------------------------------------------------
 
+let settingsCache: Record<string, { value: string | null; expires: number }> = {};
+
 export async function getSetting(key: string): Promise<string | null> {
+  const now = Date.now();
+  if (settingsCache[key] && settingsCache[key].expires > now) {
+    return settingsCache[key].value;
+  }
+
   const rows = await getRows('Settings!A:B');
   const row = rows.find((r) => r[0] === key);
-  return row ? (row[1] ?? null) : null;
+  const value = row ? (row[1] ?? null) : null;
+  
+  settingsCache[key] = { value, expires: now + 60000 }; // Cache for 60 seconds
+  return value;
 }
 
 export async function setSetting(key: string, value: string) {
@@ -292,5 +302,8 @@ export async function setSetting(key: string, value: string) {
       requestBody: { values: [[key, value]] },
     });
   }
+  
+  // Invalidate cache
+  delete settingsCache[key];
 }
 
